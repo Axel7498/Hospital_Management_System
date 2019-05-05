@@ -1,0 +1,203 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace Hospital_Management_System_28_03_19
+{
+    public partial class Billings_UserControl : UserControl
+    {
+        private static Billings_UserControl _instance;
+
+        public static Billings_UserControl Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new Billings_UserControl();
+                }
+                return _instance;
+            }
+        }
+        public Billings_UserControl()
+        {
+            InitializeComponent();
+        }
+
+        //creating connection to the database
+        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\Hospital_management_28_03_19.mdf;Integrated Security=True");
+
+        public void refresh_DataGridView()
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("ShowBillData_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+
+        }
+
+        private void Billings_UserControl_Load(object sender, EventArgs e)
+        {
+            refresh_DataGridView();
+        }
+
+        private void AddNewTuple_button_Click(object sender, EventArgs e)
+        {
+            SqlCommand cmd = new SqlCommand("AddBill_SP", con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@Billno", BillNumber_textbox.Text);
+            cmd.Parameters.AddWithValue("@Patname", PatientName_textbox.Text);
+            cmd.Parameters.AddWithValue("@DoctorName", DoctorName_textbox.Text);
+            cmd.Parameters.AddWithValue("@Amount", Amount_textbox.Text);
+            cmd.Parameters.AddWithValue("@pat_id", PatientID_textbox.Text);
+            
+
+            //opening the connection
+            con.Open();
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+            }
+            con.Close();//closing the connection
+
+            refresh_DataGridView();
+        }
+
+        private void UpdateTuple_button_Click(object sender, EventArgs e)
+        {
+            con.Open();
+            string query = "UPDATE Bill SET Patname='" + PatientName_textbox.Text + "',DoctorName='" + DoctorName_textbox.Text + "',Amount='" + Amount_textbox.Text + "',pat_id='" + PatientID_textbox.Text + "'where pat_id='"+PatientID_textbox.Text+"'";
+            SqlDataAdapter sda = new SqlDataAdapter(query, con);
+            sda.SelectCommand.ExecuteNonQuery();
+
+            con.Close();
+            refresh_DataGridView();
+        }
+
+        private void dataGridView1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            PatientName_textbox.Text = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
+            DoctorName_textbox.Text = dataGridView1.SelectedRows[0].Cells[2].Value.ToString();
+            Amount_textbox.Text = dataGridView1.SelectedRows[0].Cells[3].Value.ToString();
+            PatientID_textbox.Text = dataGridView1.SelectedRows[0].Cells[4].Value.ToString();
+            
+        }
+
+        private void DeleteTuple_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("BillDelete_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                //adding the parameters 
+                cmd.Parameters.AddWithValue("@Billno", BillNumber_textbox.Text);
+
+                //opening the connection 
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+                }
+                con.Close();
+
+                refresh_DataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+
+            }
+
+        }
+
+        private void ClearTuple_button_Click(object sender, EventArgs e)
+        {
+            BillNumber_textbox.Text = "";
+            PatientID_textbox.Text = "";
+            DoctorName_textbox.Text = "";
+            Amount_textbox.Text = "";
+            PatientID_textbox.Text = "";
+        }
+
+        private void SearchTuple_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("SearchBillno_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Billno", SearchBillNumber_textbox.Text);
+
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+
+        }
+    }
+}

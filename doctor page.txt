@@ -1,0 +1,204 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace Hospital_Management_System_28_03_19
+{
+    public partial class Doctors_UserControl : UserControl
+    {
+        private static Doctors_UserControl _instance;
+        public static Doctors_UserControl Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new Doctors_UserControl();
+                }
+                return _instance;
+            }
+        }
+        public Doctors_UserControl()
+        {
+            InitializeComponent();
+        }
+
+
+
+        //creating connection to the database
+        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\Hospital_management_28_03_19.mdf;Integrated Security=True");
+
+
+        public void refresh_DataGridView()
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("ShowAllDoctorData_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+        }
+
+        private void Doctors_UserControl_Load(object sender, EventArgs e)
+        {
+            refresh_DataGridView();
+        }
+
+        private void AddNewTuple_button_Click(object sender, EventArgs e)
+        {
+            SqlCommand cmd = new SqlCommand("DoctorAdd_SP", con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@dr_code",Doctor_Code_textbox.Text);
+            cmd.Parameters.AddWithValue("@Name",Name_textbox.Text);
+            cmd.Parameters.AddWithValue("@Fname",Fname_textbox.Text);
+            cmd.Parameters.AddWithValue("@gender",Gender_textbox.Text);
+            cmd.Parameters.AddWithValue("@Address",Address_textbox.Text);
+            cmd.Parameters.AddWithValue("@designation",Designation_textbox.Text);
+
+            //opening the connection
+            con.Open();
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+            }
+            con.Close();//closing the connection
+
+            refresh_DataGridView();
+        }
+
+        private void Clear_button_Click(object sender, EventArgs e)
+        {
+            Doctor_Code_textbox.Text = "";
+            Name_textbox.Text = "";
+            Fname_textbox.Text = "";
+            Gender_textbox.Text = "";
+            Designation_textbox.Text = "";
+            Address_textbox.Text = "";
+        }
+
+        private void UpdateTuple_button_Click(object sender, EventArgs e)
+        {
+            con.Open();
+            string query = "UPDATE Doctors SET Name='" + Name_textbox.Text + "',Fname='" + Fname_textbox.Text + "',Gender='" + Gender_textbox.Text + "',Address='" + Address_textbox.Text + "',designation='"+Designation_textbox.Text+"' where dr_code='" + Doctor_Code_textbox.Text + "'";
+            SqlDataAdapter sda = new SqlDataAdapter(query, con);
+            sda.SelectCommand.ExecuteNonQuery();
+            con.Close();
+            refresh_DataGridView();
+        }
+
+        private void dataGridView1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            Name_textbox.Text = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
+            Fname_textbox.Text = dataGridView1.SelectedRows[0].Cells[2].Value.ToString();
+            Gender_textbox.Text = dataGridView1.SelectedRows[0].Cells[3].Value.ToString();
+            Address_textbox.Text = dataGridView1.SelectedRows[0].Cells[4].Value.ToString();
+            Designation_textbox.Text = dataGridView1.SelectedRows[0].Cells[5].Value.ToString();
+            
+        }
+
+
+        //while deleting a doctor we must remember that all the concerning patients with the doctors must be reassigned to new doctors
+        //or else there shall be conflicts between the tables
+        private void DeleteTuple_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("DoctorDelete_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                //adding the parameters 
+                cmd.Parameters.AddWithValue("@dr_code", Doctor_Code_textbox.Text);
+
+                //opening the connection 
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+                }
+                con.Close();
+
+                refresh_DataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+
+            }
+
+        }
+
+        private void SearchDoctor_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("SearchDoctor_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@dr_code", Search_Doctor_textbox.Text);
+
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+the project is divided into mainly two parts:
+1.login page
+2.operations on the database
+
+after the login page, then we are going to create the different
+tables of the database:
+
+>>Patient table(stores the patient information)
+
+>>doctor table-stores the doctor information
+
+>>patient_diagnosis table-stores the patient reports about their diagnosis
+
+>>Staff_table-storing the staff data and their co relation with their doctors
+
+>>Billing table- storing the data where the patient and their reports with their cost is stored
+
+>>about-just nijeder naam lekha ache
+
+ code gulo ami ekta text file e likhe diye dichhi and giye bole debo
+screenshot o diye dilam jate easily application ta bojha jai.

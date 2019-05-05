@@ -1,0 +1,207 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace Hospital_Management_System_28_03_19
+{
+    public partial class Patient_diagnosis_UserControl : UserControl
+    {
+        private static Patient_diagnosis_UserControl _instance;
+        public static Patient_diagnosis_UserControl Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new Patient_diagnosis_UserControl();
+                }
+                return _instance;
+            }
+        }
+        public Patient_diagnosis_UserControl()
+        {
+            InitializeComponent();
+        }
+
+
+        //creating connection to the database
+        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\Hospital_management_28_03_19.mdf;Integrated Security=True");
+
+        //creating data grid view
+        public void refresh_DataGridView()
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("ShowAllPatientDiagData_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+
+        }
+
+        private void Patient_diagnosis_UserControl_Load(object sender, EventArgs e)
+        {
+            refresh_DataGridView();
+        }
+
+        private void AddNewTuple_button_Click(object sender, EventArgs e)
+        {
+            SqlCommand cmd = new SqlCommand("PatientDiagAdd_SP", con);
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            cmd.Parameters.AddWithValue("@DiagNo", DiagNo_textbox.Text);
+            cmd.Parameters.AddWithValue("@DiagDetails", DiagDetails_textbox.Text);
+            cmd.Parameters.AddWithValue("@Remark", Remark_textbox.Text);
+            
+            cmd.Parameters.AddWithValue("@Others", Others_textbox.Text);
+            cmd.Parameters.AddWithValue("@pat_id", Patient_ID_textbox.Text);
+            //opening the connection
+            con.Open();
+            try
+            {
+                cmd.ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+            }
+            con.Close();//closing the connection
+
+            refresh_DataGridView();
+        }
+
+        private void Clear_button_Click(object sender, EventArgs e)
+        {
+            DiagNo_textbox.Text = "";
+            DiagDetails_textbox.Text = "";
+            Remark_textbox.Text = "";
+            
+            Others_textbox.Text = "";
+            Patient_ID_textbox.Text = "";
+        }
+
+        //remember that the patient id must be there for updating the database 
+        //because the patient id references the table of patient according to their diagnosis
+        private void UpdateTuple_button_Click(object sender, EventArgs e)
+        {
+            con.Open();
+            string query = "UPDATE Patient_diagnosis SET DiagNo='" + DiagNo_textbox.Text + "',DiagDetails='" + DiagDetails_textbox.Text + "',Remark='" + Remark_textbox.Text + "',Others='" + Others_textbox.Text + "' where pat_id='" + Patient_ID_textbox.Text + "'";
+            SqlDataAdapter sda = new SqlDataAdapter(query, con);
+            sda.SelectCommand.ExecuteNonQuery();
+            con.Close();
+            refresh_DataGridView();
+        }
+
+        private void dataGridView1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            DiagDetails_textbox.Text = dataGridView1.SelectedRows[0].Cells[1].Value.ToString();
+            Remark_textbox.Text = dataGridView1.SelectedRows[0].Cells[2].Value.ToString();
+            
+            Others_textbox.Text = dataGridView1.SelectedRows[0].Cells[3].Value.ToString();
+            
+        }
+
+        private void DeleteTuple_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("PatientDiagDelete_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                //adding the parameters 
+                cmd.Parameters.AddWithValue("@DiagNo", DiagNo_textbox.Text);
+
+                //opening the connection 
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("   Invalid sql OPerations    \n" + ex);
+                }
+                con.Close();
+
+                refresh_DataGridView();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+
+            }
+
+        }
+
+        private void Search_patient_diagnosis_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SqlCommand cmd = new SqlCommand("SearchPatientDiag_SP", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@DiagNo", SearchPatienDiag_textbox.Text);
+
+
+                SqlDataAdapter DA = new SqlDataAdapter(cmd);
+                DataSet DS = new DataSet();
+                DA.Fill(DS);
+
+
+                con.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("        Invalid SQL operations            " + ex);
+                }
+                con.Close();
+
+
+                dataGridView1.DataSource = DS.Tables[0];
+
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("" + ex);
+            }
+        }
+
+        private void DiagNo_label_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
